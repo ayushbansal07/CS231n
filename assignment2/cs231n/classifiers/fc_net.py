@@ -259,15 +259,19 @@ class FullyConnectedNet(object):
         # layer, etc.                                                              #
         ############################################################################
         pass
-        print(len(self.params))
-        out, cache = affine_relu_forward(X,self.params['W1'],self.params['b1'])
+        #   print(len(self.params))
+        cache = []
+        out, tempCache = affine_relu_forward(X,self.params['W1'],self.params['b1'])
+        cache.append(tempCache)
         for i in range(2,self.num_layers):
             wt = "W" + str(i)
             bs = "b" + str(i)
-            out, cache = affine_relu_forward(out, self.params[wt],self.params[bs])
+            out, tempCache = affine_relu_forward(out, self.params[wt],self.params[bs])
+            cache.append(tempCache)
         wt = "W" + str(self.num_layers)
         bs = "b" + str(self.num_layers)
-        scores, cache = affine_forward(out,self.params[wt],self.params[bs])
+        scores, tempCache = affine_forward(out,self.params[wt],self.params[bs])
+        cache.append(tempCache)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -297,7 +301,21 @@ class FullyConnectedNet(object):
             wt = "W" + str(i)
             loss += 0.5*self.reg*np.sum(self.params[wt]*self.params[wt])
 
+        dout, dW, db = affine_backward(dout, cache[self.num_layers-1])
+        wt = "W" + str(self.num_layers)
+        bs = "b" + str(self.num_layers)
+        grads[wt] = dW
+        grads[wt] += self.reg*self.params[wt]
+        grads[bs] = db
+        for i in range(self.num_layers -2, -1, -1):
+            wt = "W" + str(i+1)
+            bs = "b" + str(i+1)
+            dout, dW, db = affine_relu_backward(dout, cache[i])
+            grads[wt] = dW
+            grads[wt] += self.reg*self.params[wt]
+            grads[bs] = db
 
+        ##add regularisation
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
