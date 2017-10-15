@@ -261,12 +261,13 @@ class FullyConnectedNet(object):
         pass
         print(len(self.params))
         out, cache = affine_relu_forward(X,self.params['W1'],self.params['b1'])
-        for i in range(2,self.num_layers+ 1):
+        for i in range(2,self.num_layers):
             wt = "W" + str(i)
             bs = "b" + str(i)
             out, cache = affine_relu_forward(out, self.params[wt],self.params[bs])
-
-        scores = out
+        wt = "W" + str(self.num_layers)
+        bs = "b" + str(self.num_layers)
+        scores, cache = affine_forward(out,self.params[wt],self.params[bs])
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -296,7 +297,7 @@ class FullyConnectedNet(object):
             wt = "W" + str(i)
             loss += 0.5*self.reg*np.sum(self.params[wt]*self.params[wt])
 
-        
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
