@@ -37,10 +37,10 @@ def rnn_step_forward(x, prev_h, Wx, Wh, b):
     pass
     statemul = prev_h.dot(Wh)
     ipmul = x.dot(Wx)
-    summation = statemul + ipmul
+    summation = statemul + ipmul + b
     next_h = np.tanh(summation)
 
-    cache = (statemul, ipmul, summation, next_h)
+    cache = (statemul, ipmul, summation, next_h, x, prev_h, Wx, Wh)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -70,6 +70,14 @@ def rnn_step_backward(dnext_h, cache):
     # of the output value from tanh.                                             #
     ##############################################################################
     pass
+    statemul, ipmul, summation, next_h, x, prev_h, Wx, Wh = cache
+    dsummation = (1 - (np.tanh(summation)**2))*dnext_h
+    db = np.sum(dsummation,axis=0)
+    dx = dsummation.dot(Wx.T)
+    dWx = np.transpose(x).dot(dsummation)
+    dprev_h = dsummation.dot(Wh.T)
+    dWh = np.transpose(prev_h).dot(dsummation)
+    
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -101,6 +109,17 @@ def rnn_forward(x, h0, Wx, Wh, b):
     # above. You can use a for loop to help compute the forward pass.            #
     ##############################################################################
     pass
+    N,T,D = x.shape
+    H = h0.shape[1]
+    h = np.zeros((N,T,H))
+    prev_h = h0
+    cache = []
+    for i in range(T):
+        next_h,c = rnn_step_forward(x[:,i,:], prev_h, Wx, Wh, b)
+        prev_h = next_h
+        h[:,i,:] = next_h
+        cache.append(c)
+    cache.append(D)           
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -128,6 +147,22 @@ def rnn_backward(dh, cache):
     # defined above. You can use a for loop to help compute the backward pass.   #
     ##############################################################################
     pass
+    N,T,H = dh.shape
+    D = cache.pop()
+    print(D)
+    dx = np.zeros((N,T,D))
+    dWx = np.zeros((D,H))
+    dWh = np.zeros((H,H))
+    db = np.zeros((H,))
+    dprev_h = np.zeros((N,H))
+    for i in reversed(range(T)):
+        c = cache.pop()
+        dx_s, dprev_h, dWx_s, dWh_s, db_s = rnn_step_backward(dh[:,i,:] + dprev_h,c)
+        dx[:,i,:] = dx_s
+        dWx += dWx_s
+        dWh += dWh_s
+        db += db_s
+    dh0 = dprev_h    
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -156,6 +191,8 @@ def word_embedding_forward(x, W):
     # HINT: This can be done in one line using NumPy's array indexing.           #
     ##############################################################################
     pass
+    out = W[x]
+    cache = (x,W)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -185,6 +222,9 @@ def word_embedding_backward(dout, cache):
     # HINT: Look up the function np.add.at                                       #
     ##############################################################################
     pass
+    x,W = cache
+    dW = np.zeros_like(W)
+    np.add.at(dW,x,dout)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
