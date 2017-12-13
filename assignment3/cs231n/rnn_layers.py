@@ -35,6 +35,12 @@ def rnn_step_forward(x, prev_h, Wx, Wh, b):
     # and cache variables respectively.                                          #
     ##############################################################################
     pass
+    statemul = prev_h.dot(Wh)
+    ipmul = x.dot(Wx)
+    summation = statemul + ipmul
+    next_h = np.tanh(summation)
+
+    cache = (statemul, ipmul, summation, next_h)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
